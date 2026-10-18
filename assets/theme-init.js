@@ -1,0 +1,1 @@
+(function(){var mode='';try{mode=localStorage.getItem('sulal-color-mode')||''}catch(e){}if(mode!=='light'&&mode!=='dark'){mode=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.dataset.theme=mode;document.documentElement.style.colorScheme=mode})();
