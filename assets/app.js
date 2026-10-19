@@ -26,8 +26,19 @@ window.initSulal=function(){
  const params=new URLSearchParams(window.sulalPreviewQuery||location.search);
  const services={'property-real-estate':'Property & Real Estate','rent-a-car':'Rent a Car','car-sales-purchase':'Car Sales & Purchase','construction-development':'Construction & Development','forex-education':'Forex Trading Education'};
  if(form){const select=form.querySelector('[name="sulal_service"]');if(select&&services[params.get('service')])select.value=services[params.get('service')];
-  if(form.dataset.mode==='demo'){form.addEventListener('submit',e=>{e.preventDefault();const status=form.querySelector('.form-status');status.textContent='Demo only — your enquiry has not been sent or stored. The WordPress version sends enquiries to the email configured by the site owner.';status.dataset.state='notice';status.scrollIntoView({block:'nearest',behavior:reduced?'auto':'smooth'})})}
-  if(form.dataset.mode==='wordpress'){const result=params.get('enquiry');const message={sent:'Your enquiry has been accepted by the website mail system. Please allow the team time to respond.',failed:'Your enquiry could not be sent. Please try again later or use the published contact details.',invalid:'Please check all required fields and your consent, then try again.',expired:'The form session expired. Please reload the page and try again.',limited:'Please wait a moment before sending another enquiry.',unconfigured:'Online enquiries are not enabled yet. Please use the published contact details.'}[result];if(message){const status=form.querySelector('.form-status');status.textContent=message;status.dataset.state=result==='sent'?'success':'error'}}
+  form.addEventListener('submit',e=>{
+   e.preventDefault();if(!form.reportValidity())return;
+   const status=form.querySelector('.form-status'),data=new FormData(form);
+   if(String(data.get('sulal_website')||'').trim()){status.textContent='Please leave the hidden field blank.';return}
+   const digits=String((window.SULAL_CONFIG||{}).whatsappNumber||'').replace(/\D/g,'');
+   if(!/^\d{8,15}$/.test(digits)){status.textContent='WhatsApp is unavailable. Please use the published contact details.';return}
+   const value=key=>String(data.get('sulal_'+key)||'').trim();
+   const message=['New website enquiry — Sulal Entrepreneur UK','','Name: '+value('name'),'Email: '+value('email'),'Phone: '+(value('phone')||'Not provided'),'Service: '+value('service'),'','Message:',value('message'),'','Consent: provided to respond to this enquiry.'].join('\n');
+   const url='https://wa.me/'+digits+'?text='+encodeURIComponent(message);
+   status.replaceChildren(document.createTextNode('Your message is ready. Tap Send in WhatsApp to deliver it. If WhatsApp did not open, '));
+   const retry=document.createElement('a');retry.href=url;retry.target='_blank';retry.rel='noopener noreferrer';retry.className='inline-button';retry.textContent='open WhatsApp here';status.append(retry);status.dataset.state='notice';
+   window.open(url,'_blank','noopener,noreferrer');
+  });
  }
 };
 
