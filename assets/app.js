@@ -86,14 +86,15 @@ window.initSulalSlider=function(root,reduced){
  const title=hero.querySelector('h1'),kicker=hero.querySelector('.hero-slide-kicker'),description=hero.querySelector('.hero-slide-description'),cta=hero.querySelector('.hero-slide-cta'),enquiry=hero.querySelector('.hero-slide-enquiry'),note=hero.querySelector('.hero-slide-note'),count=hero.querySelector('.hero-slide-count'),playButton=hero.querySelector('.hero-autoplay'),status=hero.querySelector('.hero-slide-status'),copy=hero.querySelector('.hero-copy'),typing=hero.querySelector('.typed-service');
  const enquiryBase=enquiry.getAttribute('href'),preview=root.id==='preview-root',controller=new AbortController(),options={signal:controller.signal};
  let index=0,paused=!!reduced,hovered=false,timer=null,typingTimer=null,reducedMotion=!!reduced,touch=null;
- const interval=7500;
+ const interval=3000;
  function urlFor(slide){return preview?'#page='+slide.slug:slide.url}
  function enquiryFor(slide){if(preview){const q=new URLSearchParams((enquiryBase.split('#')[1]||'page=contact'));q.set('page','contact');q.set('service',slide.slug);return '#'+q.toString()}try{const url=new URL(enquiryBase,location.href);url.searchParams.set('service',slide.slug);return url.href}catch(e){return enquiryBase}}
  function refresh(){const stopped=paused||hovered||document.hidden;hero.classList.toggle('is-paused',stopped);playButton.setAttribute('aria-pressed',String(paused));playButton.setAttribute('aria-label',paused?'Start slideshow':'Pause slideshow');clearTimeout(timer);if(!stopped){const line=dots[index].querySelector('i');line.style.animation='none';void line.offsetWidth;line.style.animation='';timer=setTimeout(()=>show((index+1)%slides.length,false),interval)}}
  function show(next,manual=false,initial=false){
+  const previous=index;
   index=(next+slides.length)%slides.length;const slide=slides[index];if(manual)paused=true;
   hero.dataset.slide=String(index);kicker.textContent=slide.name.toUpperCase();title.innerHTML=slide.headline;description.textContent=slide.description;cta.replaceChildren(document.createTextNode(slide.cta+' '));const arrow=document.createElement('span');arrow.textContent='↗';cta.append(arrow);cta.href=urlFor(slide);enquiry.href=enquiryFor(slide);note.textContent=slide.note;count.innerHTML=String(index+1).padStart(2,'0')+' <span>/ '+String(slides.length).padStart(2,'0')+'</span>';
-  frames.forEach((frame,i)=>{frame.classList.toggle('is-active',i===index);if(i===index){const img=frame.querySelector('img');img.loading='eager'}});
+  frames.forEach((frame,i)=>{frame.classList.remove('is-entering','is-leaving');void frame.offsetWidth;frame.classList.toggle('is-active',i===index);if(!initial&&previous!==index&&!reducedMotion){frame.classList.toggle('is-entering',i===index);frame.classList.toggle('is-leaving',i===previous);}if(i===index){const img=frame.querySelector('img');img.loading='eager'}});
   dots.forEach((dot,i)=>{dot.classList.toggle('is-active',i===index);dot.setAttribute('aria-current',i===index?'true':'false');const line=dot.querySelector('i');line.style.animation='none';void line.offsetWidth;line.style.animation=''});
   clearTimeout(typingTimer);if(typing){typing.textContent=slide.name;if(!initial&&!reducedMotion){typing.textContent='';let position=0;const type=()=>{if(!typing.isConnected)return;typing.textContent=slide.name.slice(0,++position);if(position<slide.name.length)typingTimer=setTimeout(type,35)};type()}}
   if(!initial&&!reducedMotion){copy.classList.remove('copy-enter');void copy.offsetWidth;copy.classList.add('copy-enter')}
