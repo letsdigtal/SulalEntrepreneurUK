@@ -15,3 +15,6 @@ body{background:#000;color:var(--ink)}h1 em,h2 em,h3 em{color:var(--gold)}.heade
 body[data-page=about] .page-hero-image .page-image-label{position:relative;inset:auto;bottom:auto;background:#080704;border-top:1px solid #dfbd7444;padding:17px 20px}
 body[data-page=about] .page-hero-image .portrait-disclosure{font-size:10px;line-height:1.6;color:#b9ad93;margin:12px 0 0;max-width:100%;padding:0 3px}
 html{scroll-padding-top:130px}@media(max-width:1050px){html{scroll-padding-top:116px}}
+
+/* Discreet developer attribution, separate from business enquiries. */
+.footer-bottom .developer-credit{font-size:11px;font-weight:400;letter-spacing:.2px;text-transform:none;color:#c9b989;white-space:nowrap}.footer-bottom .developer-credit:hover{color:#e8c779;text-decoration:underline}.footer-bottom .developer-credit:focus-visible{outline:2px solid #dfbd74;outline-offset:4px}
