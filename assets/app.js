@@ -36,8 +36,10 @@ window.initSulal=function(){
 window.initSulalInteractions=function(root,reduced){
  const config=window.SULAL_CONFIG||{};
  clearTimeout(window.sulalTypingTimer);
+ if(window.sulalSliderCleanup){window.sulalSliderCleanup();window.sulalSliderCleanup=null;}
+ if(window.initSulalSlider)window.initSulalSlider(root,reduced);
  const typing=root.querySelector('.typed-service');
- if(typing){
+ if(typing&&!typing.closest('.hero-slider')){
   const names=['Property & Real Estate','Rent a Car','Car Sales & Purchase','Construction & Development','Forex Trading Education'];
   typing.textContent=names[0];
   if(!reduced){let index=0,position=names[0].length,deleting=true;
@@ -73,5 +75,44 @@ window.initSulalInteractions=function(root,reduced){
   else{wa.dataset.configured='false';wa.setAttribute('aria-label','WhatsApp setup pending — see contact options');wa.title='WhatsApp number has not been configured';wa.addEventListener('click',event=>{event.preventDefault();if(notice)notice.hidden=!notice.hidden})}
  }
  if(notice){notice.querySelector('.wa-note-close').addEventListener('click',()=>{notice.hidden=true;if(wa)wa.focus()});notice.addEventListener('keydown',event=>{if(event.key==='Escape'){notice.hidden=true;if(wa)wa.focus()}})}
+};
+
+/* Five-service carousel. All slide data is trusted, bundled site content. */
+window.initSulalSlider=function(root,reduced){
+ const hero=root.querySelector('.hero-slider'),dataNode=root.querySelector('#hero-slide-data');
+ if(!hero||!dataNode)return;
+ let slides;try{slides=JSON.parse(dataNode.textContent)}catch(e){return}if(!Array.isArray(slides)||slides.length!==5)return;
+ const frames=[...hero.querySelectorAll('.hero-frame')],dots=[...hero.querySelectorAll('[data-slide]')];
+ const title=hero.querySelector('h1'),kicker=hero.querySelector('.hero-slide-kicker'),description=hero.querySelector('.hero-slide-description'),cta=hero.querySelector('.hero-slide-cta'),enquiry=hero.querySelector('.hero-slide-enquiry'),note=hero.querySelector('.hero-slide-note'),count=hero.querySelector('.hero-slide-count'),playButton=hero.querySelector('.hero-autoplay'),status=hero.querySelector('.hero-slide-status'),copy=hero.querySelector('.hero-copy'),typing=hero.querySelector('.typed-service');
+ const enquiryBase=enquiry.getAttribute('href'),preview=root.id==='preview-root',controller=new AbortController(),options={signal:controller.signal};
+ let index=0,paused=!!reduced,hovered=false,timer=null,typingTimer=null,reducedMotion=!!reduced,touch=null;
+ const interval=7500;
+ function urlFor(slide){return preview?'#page='+slide.slug:slide.url}
+ function enquiryFor(slide){if(preview){const q=new URLSearchParams((enquiryBase.split('#')[1]||'page=contact'));q.set('page','contact');q.set('service',slide.slug);return '#'+q.toString()}try{const url=new URL(enquiryBase,location.href);url.searchParams.set('service',slide.slug);return url.href}catch(e){return enquiryBase}}
+ function refresh(){const stopped=paused||hovered||document.hidden;hero.classList.toggle('is-paused',stopped);playButton.setAttribute('aria-pressed',String(paused));playButton.setAttribute('aria-label',paused?'Start slideshow':'Pause slideshow');clearTimeout(timer);if(!stopped){const line=dots[index].querySelector('i');line.style.animation='none';void line.offsetWidth;line.style.animation='';timer=setTimeout(()=>show((index+1)%slides.length,false),interval)}}
+ function show(next,manual=false,initial=false){
+  index=(next+slides.length)%slides.length;const slide=slides[index];if(manual)paused=true;
+  hero.dataset.slide=String(index);kicker.textContent=slide.name.toUpperCase();title.innerHTML=slide.headline;description.textContent=slide.description;cta.replaceChildren(document.createTextNode(slide.cta+' '));const arrow=document.createElement('span');arrow.textContent='↗';cta.append(arrow);cta.href=urlFor(slide);enquiry.href=enquiryFor(slide);note.textContent=slide.note;count.innerHTML=String(index+1).padStart(2,'0')+' <span>/ '+String(slides.length).padStart(2,'0')+'</span>';
+  frames.forEach((frame,i)=>{frame.classList.toggle('is-active',i===index);if(i===index){const img=frame.querySelector('img');img.loading='eager'}});
+  dots.forEach((dot,i)=>{dot.classList.toggle('is-active',i===index);dot.setAttribute('aria-current',i===index?'true':'false');const line=dot.querySelector('i');line.style.animation='none';void line.offsetWidth;line.style.animation=''});
+  clearTimeout(typingTimer);if(typing){typing.textContent=slide.name;if(!initial&&!reducedMotion){typing.textContent='';let position=0;const type=()=>{if(!typing.isConnected)return;typing.textContent=slide.name.slice(0,++position);if(position<slide.name.length)typingTimer=setTimeout(type,35)};type()}}
+  if(!initial&&!reducedMotion){copy.classList.remove('copy-enter');void copy.offsetWidth;copy.classList.add('copy-enter')}
+  if(manual)status.textContent='Slide '+(index+1)+' of '+slides.length+': '+slide.name;
+  refresh();
+ }
+ hero.querySelector('.hero-prev').addEventListener('click',()=>show(index-1,true),options);
+ hero.querySelector('.hero-next').addEventListener('click',()=>show(index+1,true),options);
+ dots.forEach(dot=>dot.addEventListener('click',()=>show(Number(dot.dataset.slide),true),options));
+ playButton.addEventListener('click',()=>{paused=!paused;refresh()},options);
+ hero.addEventListener('mouseenter',()=>{hovered=true;refresh()},options);
+ hero.addEventListener('mouseleave',()=>{hovered=false;refresh()},options);
+ hero.addEventListener('focusin',event=>{if(event.target.closest('.hero-autoplay'))return;paused=true;refresh()},options);
+ hero.addEventListener('keydown',event=>{if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();show(index+(event.key==='ArrowRight'?1:-1),true)}},options);
+ hero.addEventListener('touchstart',event=>{if(event.touches.length===1)touch={x:event.touches[0].clientX,y:event.touches[0].clientY}},Object.assign({passive:true},options));
+ hero.addEventListener('touchend',event=>{if(!touch||!event.changedTouches.length)return;const t=event.changedTouches[0],dx=t.clientX-touch.x,dy=t.clientY-touch.y;touch=null;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.3)show(index+(dx<0?1:-1),true)},Object.assign({passive:true},options));
+ document.addEventListener('visibilitychange',refresh,options);
+ const mq=window.matchMedia('(prefers-reduced-motion: reduce)');if(mq.addEventListener)mq.addEventListener('change',event=>{reducedMotion=event.matches;if(reducedMotion){paused=true;clearTimeout(typingTimer);if(typing)typing.textContent=slides[index].name}refresh()},options);
+ window.sulalSliderCleanup=()=>{clearTimeout(timer);clearTimeout(typingTimer);controller.abort()};
+ show(0,false,true);
 };
 window.initSulal();

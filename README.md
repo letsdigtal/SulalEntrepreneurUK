@@ -13,7 +13,8 @@ GitHub Pages publishes from `main` at repository root. Check the repository's Pa
 - Supplied gold logo, black backgrounds, gold accents, and clear mobile navigation.
 - Five dedicated service pages plus About, Vision, Mission, Values, Approach, FAQ, Contact, Privacy and Terms.
 - Professionally AI-edited portrait based on the supplied photo, with disclosure on the site.
-- Hero service typing, optional click sounds with a mute control, scroll reveals and hover effects.
+- Premium five-service AI hero carousel with service-specific banners, controls, autoplay/pause, swipe support and reduced-motion handling.
+- Slide-synced service typing, optional click sounds with a mute control, scroll reveals and hover effects.
 - Deep-black and softer-black appearance choices.
 
 ## Business setup still needed
